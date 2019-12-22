@@ -30,22 +30,18 @@ func authHandler(c echo.Context) error {
 	}
 
 	if user == nil || !user.Active {
-		return echo.NewHTTPError(http.StatusUnauthorized)
+		return echo.ErrUnauthorized
 	}
 
 	isAuthenticated := auth.CheckPassword(input.Password, user.PasswordHash)
 	if !isAuthenticated {
-		return echo.NewHTTPError(http.StatusUnauthorized)
+		return echo.ErrUnauthorized
 	}
 
 	token, err := auth.GenerateToken(cc.secret, user.Email)
 	if err != nil {
 		return err
 	}
-
-	// send token back in Authorization header?
-	//c.Response().Header().Set(echo.HeaderAuthorization, token)
-	//return c.NoContent(http.StatusOK)
 
 	// send token back in body
 	return c.JSON(http.StatusOK, &outputData{Token: token})
