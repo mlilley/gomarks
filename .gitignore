@@ -13,4 +13,7 @@
 
 .idea
 gomarks
+main
 *.sqlite
+*.db
+.env

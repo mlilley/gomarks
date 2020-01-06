@@ -1,42 +1,52 @@
-package user
+package repos
 
 import (
 	"database/sql"
+	"github.com/mlilley/gomarks/app"
 	"strings"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
-type repo struct {
+type UserRepo interface {
+	FindAll() ([]app.User, error)
+	FindByID(id string) (*app.User, error)
+	FindByEmail(email string) (*app.User, error)
+	Create(u *app.User) (*app.User, error)
+	Update(u *app.User) error
+	DeleteByID(id string) (bool, error)
+	DeleteByEmail(email string) (bool, error)
+	DeleteAll() error
+}
+
+func NewUserRepo(db *sql.DB) UserRepo {
+	return &sqliteUserRepo{db: db}
+}
+
+type sqliteUserRepo struct {
 	db *sql.DB
 }
 
-func NewRepo(db *sql.DB) (Repository, error) {
-	return &repo{db: db}, nil
-}
-
-func (r *repo) FindAll() ([]*User, error) {
+func (r *sqliteUserRepo) FindAll() ([]app.User, error) {
 	rows, err := r.db.Query("SELECT id, email, password_hash, active FROM user ORDER BY email")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	users := []*User{}
+	users := []app.User{}
 	for rows.Next() {
-		var user User
+		var user app.User
 		err = rows.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Active)
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, &user)
+		users = append(users, user)
 	}
 
 	return users, nil
 }
 
-func (r *repo) FindByID(id string) (*User, error) {
-	var user User
+func (r *sqliteUserRepo) FindByID(id string) (*app.User, error) {
+	var user app.User
 
 	//sid, err := strconv.Atoi(id)
 	//if err != nil {
@@ -56,8 +66,8 @@ func (r *repo) FindByID(id string) (*User, error) {
 	return &user, nil
 }
 
-func (r *repo) FindByEmail(email string) (*User, error) {
-	var user User
+func (r *sqliteUserRepo) FindByEmail(email string) (*app.User, error) {
+	var user app.User
 	err := r.db.
 		QueryRow("SELECT id, email, password_hash, active FROM user WHERE email = ?", strings.ToLower(email)).
 		Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Active)
@@ -72,7 +82,7 @@ func (r *repo) FindByEmail(email string) (*User, error) {
 }
 
 
-func (r *repo) Create(user *User) (*User, error) {
+func (r *sqliteUserRepo) Create(user *app.User) (*app.User, error) {
 	email := strings.ToLower(user.Email)
 	result, err := r.db.Exec(
 		"INSERT INTO user(email, password_hash, active) VALUES (?, ?, ?)",
@@ -90,7 +100,7 @@ func (r *repo) Create(user *User) (*User, error) {
 	return user, nil
 }
 
-func (r *repo) Update(user *User) error {
+func (r *sqliteUserRepo) Update(user *app.User) error {
 	email := strings.ToLower(user.Email)
 	result, err := r.db.Exec(
 		"UPDATE user SET email = ?, password_hash = ?, active = ? WHERE id = ?",
@@ -110,7 +120,7 @@ func (r *repo) Update(user *User) error {
 	return nil
 }
 
-func (r *repo) DeleteByID(id string) (bool, error) {
+func (r *sqliteUserRepo) DeleteByID(id string) (bool, error) {
 	result, err := r.db.Exec("DELETE FROM user WHERE id = ?", id)
 	if err != nil {
 		return false, err
@@ -124,7 +134,7 @@ func (r *repo) DeleteByID(id string) (bool, error) {
 	return n != 0, nil
 }
 
-func (r *repo) DeleteByEmail(email string) (bool, error) {
+func (r *sqliteUserRepo) DeleteByEmail(email string) (bool, error) {
 	email = strings.ToLower(email)
 	result, err := r.db.Exec("DELETE FROM user WHERE email = ?", email)
 	if err != nil {
@@ -139,7 +149,7 @@ func (r *repo) DeleteByEmail(email string) (bool, error) {
 	return n != 0, nil
 }
 
-func (r *repo) DeleteAll() error {
+func (r *sqliteUserRepo) DeleteAll() error {
 	_, err := r.db.Exec("DELETE FROM user")
 	if err != nil {
 		return err
