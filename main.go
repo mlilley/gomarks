@@ -36,19 +36,24 @@ func main() {
 
 	userRepo := repos.NewUserRepo(db)
 	markRepo := repos.NewMarkRepo(db)
-	authService := services.NewAuthService(userRepo, secret)
+	deviceRepo := repos.NewDeviceRepo(db)
+
+	authService := services.NewAuthService(userRepo, deviceRepo, secret)
 	//userService := services.NewUserService(userRepo)
 	markService := services.NewMarkService(markRepo)
+	authorizeMiddleware := handlers.AuthorizeMiddleware(authService)
 
 	e.Use(middleware.Logger())
 
-	e.POST("/token", handlers.HandleCreateToken(authService))
-	e.GET("/marks", handlers.HandleGetMarks(markService))
-	//e.GET("/marks/:id", h.GetMark).Name = "GetMark"
-	//e.POST("/marks", h.CreateMark)
-	//e.PUT("/marks/:id", h.UpdateMark)
-	//e.DELETE("/marks/:id", h.DeleteMark)
-	//e.DELETE("/marks", h.DeleteMarks)
+	e.POST("/token", handlers.CreateToken(authService))
+
+	marksGroup := e.Group("/marks", authorizeMiddleware)
+	marksGroup.GET("", handlers.GetMarks(markService))
+	marksGroup.GET("/:id", handlers.GetMark(markService)).Name = "GetMark"
+	marksGroup.POST("", handlers.CreateMark(markService))
+	marksGroup.PUT("/:id", handlers.UpdateMark(markService))
+	marksGroup.DELETE("/:id", handlers.DeleteMark(markService))
+	marksGroup.DELETE("/", handlers.DeleteMarks(markService))
 
 	server := &http.Server{
 		Addr:         "localhost:8080",

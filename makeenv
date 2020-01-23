@@ -9,13 +9,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 rm -rf "$DIR/gomarks.db"
 sqlite3 "$DIR/gomarks.db" <<EOF
 CREATE TABLE user (id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, active INTEGER NOT NULL);
+CREATE TABLE device (user_id INTEGER NOT NULL, device_id TEXT NOT NULL, token_hash TEXT NOT NULL, PRIMARY KEY(user_id, device_id), FOREIGN KEY(user_id REFERENCES user(id));
 CREATE TABLE mark (id INTEGER PRIMARY KEY, title TEXT, url TEXT, user_id INTEGER NOT NULL, FOREIGN KEY(user_id) REFERENCES user(id));
 INSERT INTO user (email, password_hash, active) VALUES ('test@example.com', '\$2a\$14\$RjtUXdY343NfD2xpp/2GguI/3wK5tlLguKh/mtRgdFwfyu7jWfgUy', 1);
+INSERT INTO device (device_id, user_id, refresh_token_hash) VALUES ('bf6d0a2f-95d6-4bf2-bc3e-62d5f829ebfa', 1, 'not-a-hash');
 INSERT INTO mark (title, url, user_id) VALUES ('Google', 'https://google.com', 1), ('Amazon', 'https://amazon.com', 1);
 EOF
 
 # 2. create .env file
 cat > "$DIR/.env" <<EOF
 GOMARKS_SECRET=secret
-GOMARKS_DB=gomarks.db
 EOF
