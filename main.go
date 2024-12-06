@@ -45,7 +45,7 @@ func main() {
 
 	e.Use(middleware.Logger())
 
-	e.POST("/token", handlers.CreateToken(authService))
+	//e.POST("/token", handlers.CreateToken(authService))
 
 	marksGroup := e.Group("/marks", authorizeMiddleware)
 	marksGroup.GET("", handlers.GetMarks(markService))

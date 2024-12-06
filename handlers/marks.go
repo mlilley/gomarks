@@ -17,6 +17,7 @@ func GetMarks(marksService services.MarkService) echo.HandlerFunc {
 			return err
 		}
 
+		c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
 		return c.JSON(http.StatusOK, marks)
 	}
 }

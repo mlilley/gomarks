@@ -9,11 +9,17 @@ import (
 func AuthorizeMiddleware(authService services.AuthService) func(echo.HandlerFunc) echo.HandlerFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			// disabling auth for the time being...
+			if (true) {
+				return next(c)
+			}
+			// end disable
+
 			token := parseToken(c.Request().Header.Get(echo.HeaderAuthorization))
 			if token == "" {
 				return echo.ErrUnauthorized
 			}
-			user, err := authService.Authorize(token)
+			user, _, err := authService.Authorize(token)
 			if err != nil {
 				return echo.ErrUnauthorized
 			}

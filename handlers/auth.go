@@ -41,7 +41,8 @@ func Refresh(authService services.AuthService) echo.HandlerFunc {
 		// obtain refreshToken from header/body?
 		// ...
 
-		user, deviceId, accessToken, authService.Refresh(refreshToken)
+		// user, deviceId, accessToken, authService.Refresh(refreshToken)
+		return nil
 	}
 }
 
